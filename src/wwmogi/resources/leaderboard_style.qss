@@ -1,0 +1,56 @@
+/* -------------------- QTableWidget Styling -------------------- */
+QTableWidget {
+    /* Dark Grey Background */
+    background-color: #202020;
+
+    /* Slightly Lighter Grey for alternating rows */
+    alternate-background-color: #2c2c2c;
+
+    /* White Text (Essential for dark mode) */
+    color: #e0e0e0;
+
+    /* Darker Blue selection highlight */
+    selection-background-color: #3d5a80;
+
+    /* Darker Border */
+    border: 1px solid #444444;
+
+    /* Grid lines between cells */
+    gridline-color: #353535;
+}
+
+/* -------------------- Header Styling -------------------- */
+/* Ensuring headers match the dark theme */
+QHeaderView::section {
+    background-color: #303030;
+    color: #ffffff;
+    border: 1px solid #444444;
+    padding: 4px;
+}
+
+QHeaderView::section:vertical {
+    /* This rule centers the row numbers (1, 2, 3...) */
+    text-align: center;
+}
+
+/* -------------------- Vertical Scrollbar Styling -------------------- */
+QScrollBar:vertical {
+    border: none;
+    background: #2b2b2b; /* Dark track background */
+    width: 10px;
+}
+
+QScrollBar::handle:vertical {
+    background: #606060; /* Lighter grey handle */
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #808080; /* Highlight on hover */
+}
+
+/* Remove default scrollbar buttons (up/down arrows) */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
