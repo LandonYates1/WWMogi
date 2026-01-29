@@ -1,6 +1,5 @@
 import os
 import sys
-import subprocess
 import json
 import shutil
 from PyQt6.QtWidgets import (
@@ -35,8 +34,6 @@ def get_asset_path(filename):
     # Fallback to base_path if not in resources
     return os.path.join(base_path, filename)
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-EXTERNAL_SCRIPT_PATH = os.path.join(base_dir, "data_fetcher.py")
 DATA_FILE = "player_data.json"
 CACHE_FILE = "leaderboard_cache.json"
 QSS_FILE = get_asset_path("leaderboard_style.qss")
@@ -55,7 +52,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         self.layout = QVBoxLayout(central_widget)
 
-        # Initialize variables before calling initUI
         self.table_widget = None
         self.status_label = None
 
@@ -65,12 +61,12 @@ class MainWindow(QMainWindow):
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_data)
 
-        # Initial launch: Load cache if exists, then trigger fresh update
         if os.path.exists(CACHE_FILE):
             self.load_data_into_table(CACHE_FILE)
 
         self.refresh_data() # Trigger first update immediately
-        self.refresh_timer.start(900000) # Repeat every 5 minutes (300,000ms)
+        # Set to 900,000ms (15 minutes) as per your current file
+        self.refresh_timer.start(900000)
 
     def initUI(self):
         label = QLabel("Leaderboard")
@@ -79,7 +75,6 @@ class MainWindow(QMainWindow):
         label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.layout.addWidget(label)
 
-        # Status label shows update progress
         self.status_label = QLabel("Initializing...")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.layout.addWidget(self.status_label)
@@ -95,39 +90,31 @@ class MainWindow(QMainWindow):
         self.layout.setStretch(2, 1)
 
     def refresh_data(self):
-        """Runs the external data_fetcher.py script automatically."""
-        self.status_label.show()
+        """Runs the external data_fetcher.py script by importing it."""
         self.status_label.setText("Refreshing leaderboard...")
 
-        if os.path.exists(DATA_FILE):
-            try:
-                os.remove(DATA_FILE)
-            except:
-                pass
-
         try:
-            result = subprocess.run(
-                [sys.executable, EXTERNAL_SCRIPT_PATH],
-                capture_output=True,
-                text=True,
-                check=False
-            )
+            # Import and run the main function directly
+            import data_fetcher
+            data_fetcher.main()
 
-            if result.returncode == 0 and os.path.exists(DATA_FILE):
+            if os.path.exists(DATA_FILE):
                 self.load_data_into_table(DATA_FILE)
                 shutil.copyfile(DATA_FILE, CACHE_FILE)
                 self.status_label.setText("Last Updated: Just now")
             else:
-                self.status_label.setText("Update failed. Showing cached data.")
-                if os.path.exists(CACHE_FILE):
-                    self.load_data_into_table(CACHE_FILE)
+                self.status_label.setText("Update failed: Data file not found.")
 
         except Exception as e:
             self.status_label.setText(f"Error: {e}")
+
         finally:
+            # Clean up the temporary data file if it exists
             if os.path.exists(DATA_FILE):
-                try: os.remove(DATA_FILE)
-                except: pass
+                try:
+                    os.remove(DATA_FILE)
+                except:
+                    pass
 
     def load_data_into_table(self, file_path):
         """Reads JSON and populates the table."""
@@ -176,4 +163,7 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
+    # Standard requirement for PyInstaller apps with multiple processes
+    import multiprocessing
+    multiprocessing.freeze_support()
     main()
